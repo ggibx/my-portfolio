@@ -48,12 +48,30 @@
           <button @click="downloadFile" class="download-btn">下载</button>
         </div>
         <div class="pdf-container">
+          <!-- 移动端使用 object 标签，桌面端使用 iframe -->
+          <object 
+            v-if="isMobile"
+            :data="pdfUrl" 
+            type="application/pdf"
+            class="pdf-viewer"
+          >
+            <div class="mobile-pdf-fallback">
+              <p>您的浏览器不支持直接预览 PDF</p>
+              <button @click="downloadFile" class="download-btn-mobile">点击下载查看</button>
+              <a :href="pdfUrl" target="_blank" class="open-new-tab-btn">在新标签页打开</a>
+            </div>
+          </object>
           <iframe 
+            v-else
             :src="pdfUrl" 
             class="pdf-viewer"
             frameborder="0"
             type="application/pdf"
           ></iframe>
+        </div>
+        <!-- 移动端额外提示 -->
+        <div v-if="isMobile" class="mobile-tip">
+          <p>💡 提示：如果无法预览，请点击上方"下载"按钮或"在新标签页打开"查看简历</p>
         </div>
       </div>
     </div>
@@ -61,12 +79,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const fileInput = ref(null)
 const uploadedFile = ref(null)
 const pdfUrl = ref('')
 const isDragOver = ref(false)
+const isMobile = ref(false)
+
+// 检测是否为移动端
+const checkMobile = () => {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
+  isMobile.value = mobileRegex.test(userAgent.toLowerCase()) || window.innerWidth <= 768
+}
+
+// 监听窗口大小变化
+const handleResize = () => {
+  checkMobile()
+}
 
 // IndexedDB 存储键名
 const DB_NAME = 'ResumeStorage'
@@ -256,6 +287,10 @@ const deleteFileFromDB = async () => {
 
 // 组件挂载时加载已保存的文件
 onMounted(async () => {
+  // 检测移动端
+  checkMobile()
+  window.addEventListener('resize', handleResize)
+  
   console.log('开始加载已保存的文件...')
   const savedFile = await loadFileFromDB()
   if (savedFile) {
@@ -263,6 +298,14 @@ onMounted(async () => {
     await processFile(savedFile, false) // false 表示不保存，因为已经存在
   } else {
     console.log('没有找到已保存的文件')
+  }
+})
+
+// 组件卸载前清理
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (pdfUrl.value) {
+    URL.revokeObjectURL(pdfUrl.value)
   }
 })
 
@@ -338,6 +381,13 @@ const downloadFile = () => {
     link.href = pdfUrl.value
     link.download = uploadedFile.value.name
     link.click()
+  }
+}
+
+// 在新标签页打开 PDF
+const openInNewTab = () => {
+  if (pdfUrl.value) {
+    window.open(pdfUrl.value, '_blank')
   }
 }
 </script>
@@ -519,6 +569,74 @@ const downloadFile = () => {
   border: none;
 }
 
+.mobile-pdf-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+  gap: 20px;
+  text-align: center;
+}
+
+.mobile-pdf-fallback p {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.download-btn-mobile {
+  padding: 12px 32px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.download-btn-mobile:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.open-new-tab-btn {
+  padding: 12px 32px;
+  background: #10b981;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.open-new-tab-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.mobile-tip {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.mobile-tip p {
+  color: #92400e;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 2rem;
@@ -529,13 +647,18 @@ const downloadFile = () => {
   }
   
   .pdf-container {
-    height: 600px;
+    height: 500px;
+    min-height: 400px;
   }
   
   .preview-header {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
+  }
+  
+  .preview-section {
+    padding: 20px;
   }
 }
 </style>
