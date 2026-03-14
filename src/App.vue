@@ -1,18 +1,33 @@
 <template>
-  <div class="app-container">
-    <ResumePage />
+  <div id="app">
+    <Resume />
   </div>
 </template>
 
 <script setup>
-import ResumePage from './components/ResumePage.vue'
+import Resume from './components/Resume.vue'
 </script>
 
-<style scoped>
-.app-container {
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#app {
+  font-family: 'Microsoft YaHei', 'SimSun', 'SimHei', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f5f5f5;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+@media print {
+  #app {
+    background: white;
+    padding: 0;
+  }
 }
 </style>
-
-
