@@ -39,7 +39,7 @@
         <div class="skills-content">
           <div class="skill-category">
             <h3 class="skill-title">计算机基础</h3>
-            <p class="skill-desc">熟悉计算机网络、数据结构、算法、操作系统</p>
+            <p class="skill-desc">熟悉计算机网络、数据结构、计算机组成原理、算法、操作系统</p>
           </div>
           <div class="skill-category">
             <h3 class="skill-title">Java</h3>
